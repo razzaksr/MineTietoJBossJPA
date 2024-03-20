@@ -1,0 +1,206 @@
+SpringBootWeb project in JBoss:
+
+I have two options one explored by myself , another one with shankar helped out through arun
+
+
+Solution after discussion with shankar via arun
+1. Creating SpringBootStarterWeb project with WAR deployment:
+	POM.xml dependencies are: spring-boot-starter-web
+								exclusion : spring-boot-starter-tomcat(exclude when run on jboss)
+							ojdbc6>> 11.2.0.4
+							spring-boot-starter-webflux
+							javax.servlet-api>>4.0.1 >> provided scope
+
+2. jdk 1.8>> spring boot version 2.7.10
+3. sdk version of project in project structure should be 1.8
+4. create RestController with mappings
+5. server.port=8082 in application.properties it can be user defined but number should be same in standalone.xml of jboss http port, that we'll see further steps
+6. run and check in intelliJ
+
+7. then build it by clean package maven goals
+eg: 
+	sample-spring-jboss-0.0.1-SNAPSHOT.war
+
+8. once it all done copy the war file from target to deployments folder of jboss>> standalone
+
+9. then we need check few things in standalone.xml
+	a. security-realm name of ApplicationRealm should be as follows:
+		<security-realm name="ApplicationRealm">
+    <authentication>
+        <local default-user="$local" allowed-users="*" skip-group-loading="true"/>
+        <properties path="application-users.properties" relative-to="jboss.server.config.dir"/>
+    </authentication>
+    <authorization map-groups-to-roles="false">
+        <properties path="application-roles.properties" relative-to="jboss.server.config.dir"/>
+    </authorization>
+</security-realm>
+
+	b. then check the port of http in standalone.xml:
+		the port of http same as you mentioned in your project's application.properties or your project server.port should be same as http port in standalone.xml
+        <socket-binding name="http" port="${jboss.http.port:8082}"/>
+
+	c. once port check done then we need to check application-user.properties should have one user with proper user name and password
+		eg:
+		razak=Razak@123
+
+	d. then check role of users in application-roles.properties
+		eg:
+		razak=admin,user,manager
+
+once all are done then start the jboss server
+
+and visit http://127.0.0.1:8082/sample-jpa-jboss-0.0.1-SNAPSHOT/kyc/retrieve
+to see the mappings
+
+
+
+---------------during discussion --------------------------
+
+<exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-tomcat</artifactId>
+                </exclusion>
+            </exclusions>
+Shankar
+8:18 PM
+<dependency>
+    <groupId>javax.servlet</groupId>
+    <artifactId>javax.servlet-api</artifactId>
+    <version>4.0.1</version> 
+    <scope>provided</scope>
+</dependency>
+Shankar
+8:21 PM
+<exclusion> 
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+        </exclusion>
+Shankar
+8:56 PM
+https://conorprunty.medium.com/issues-with-deploying-a-spring-boot-application-onto-jboss-abfd6392593b
+You
+9:08 PM
+jboss.deployment.unit.\"sample-jpa-jboss-0.0.1-SNAPSHOT.war\".component.\"org.springframework.http.server.reactive.ServletServerHttpRequest$RequestAsyncListener\".WeldInstantiator" => "Failed to start service
+    Caused by: org.jboss.weld.resources.spi.ResourceLoadingException: Error while loading class org.springframework.http.server.reactive.ServletServerHttpRequest$RequestAsyncListener
+    Caused by: java.lang.NoClassDefFoundError: org/springframework/http/server/reactive/ServletServerHttpReq
+Caused by: java.lang.NoClassDefFoundError: org/springframework/http/server/reactive/ServletServerHttpRequest$RequestBodyPublisher",
+  "jboss.deployment.unit.\"sample-jpa-jboss-0.0.1-SNAPSHOT.war\".component.\"org.springframework.http.server.reactive.ServletServerHttpResponse$ResponseAsyncListener\".WeldInstantiator" => "Failed to start service
+You
+9:09 PM
+Caused by: org.jboss.weld.resources.spi.ResourceLoadingException: Error while loading class org.springframework.http.server.reactive.ServletServerHttpResponse$ResponseAsyncListener
+    Caused by: java.lang.NoClassDefFoundError: org/springframework/http/server/reactive/ServletServerHttpResponse$ResponseBodyProcessor",
+  "jboss.deployment.unit.\"sample-jpa-jboss-0.0.1-SNAPSHOT.war\".component.
+\"org.springframework.http.server.reactive.ServletHttpHandlerAdapter$HttpHandlerAsyncListener\".WeldInstantiator" => "Failed to start service
+    Caused by: org.jboss.weld.resources.spi.ResourceLoadingException: Error while loading class org.springframework.http.server.reactive.ServletHttpHandlerAdapter$HttpHandlerAsyncListener
+    Caused by: java.lang.NoClassDefFoundError: org/springframework/http/server/reactive/ServletHttpHandlerAdapter$HandlerResultSubscriber"
+Shankar
+9:11 PM
+<dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-webflux</artifactId>
+    </dependency>
+
+
+jboss.deployment.unit.\"sample-jpa-jboss-0.0.1-SNAPSHOT.war\".component.\"org.springframework.http.server.reactive.ServletServerHttpRequest$RequestAsyncListener\".WeldInstantiator" => "Failed to start service
+    Caused by: org.jboss.weld.resources.spi.ResourceLoadingException: Error while loading class org.springframework.http.server.reactive.ServletServerHttpRequest$RequestAsyncListener
+    Caused by: java.lang.NoClassDefFoundError: org/springframework/http/server/reactive/ServletServerHttpRequest$RequestBodyPublisher",
+  "jboss.deployment.unit.\"sample-jpa-jboss-0.0.1-SNAPSHOT.war\".component.\"org.springframework.http.server.reactive.ServletServerHttpResponse$ResponseAsyncListener\".WeldInstantiator" => "Failed to start service
+    Caused by: org.jboss.weld.resources.spi.ResourceLoadingException: Error while loading class org.springframework.http.server.reactive.ServletServerHttpResponse$ResponseAsyncListener
+    Caused by: java.lang.NoClassDefFoundError: org/springframework/http/server/reactive/ServletServerHttpResponse$ResponseBodyProcessor",
+  "jboss.deployment.unit.\"sample-jpa-jboss-0.0.1-SNAPSHOT.war\".component.\"org.springframework.http.server.reactive.ServletHttpHandlerAdapter$HttpHandlerAsyncListener\".WeldInstantiator" => "Failed to start service
+    Caused by: org.jboss.weld.resources.spi.ResourceLoadingException: Error while loading class org.springframework.http.server.reactive.ServletHttpHandlerAdapter$HttpHandlerAsyncListener
+    Caused by: java.lang.NoClassDefFoundError: org/springframework/http/server/reactive/ServletHttpHandlerAdapter$HandlerResultSubscriber"
+
+
+related webflux 
+
+
+
+<dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-webflux</artifactId>
+</dependency>
+
+--------------------------------------------------------------------
+
+
+
+
+
+
+Solution which i have explored however spring without jdbc/jpa only its working
+1. Creating SpringBootStarterWeb project with WAR deployment:
+	POM.xml dependencies are: spring-boot-starter-tomcat>> provided scope,
+							spring-boot-starter-web
+
+2. jdk 1.8>> spring boot version 2.7.10
+3. sdk version of project in project structure should be 1.8
+
+4. create web.xml in application.properties as following content
+<security-constraint>
+    <web-resource-collection>
+        <web-resource-name>Secured Area</web-resource-name>
+        <url-pattern>/*</url-pattern>
+    </web-resource-collection>
+    <auth-constraint>
+        <role-name>user</role-name>
+    </auth-constraint>
+</security-constraint>
+
+<security-role>
+<role-name>user</role-name>
+</security-role>
+
+<login-config>
+<auth-method>BASIC</auth-method>
+<realm-name>ApplicationRealm</realm-name>
+</login-config>
+
+
+5. create jboss-web.xml in application.properties as following content:
+<jboss-web>
+    <security-domain>java:/jaas/ApplicationRealm</security-domain>
+</jboss-web>
+
+
+6. create RestController with mappings
+
+7. server.port=8082 in application.properties it can be user defined but number should be same in standalone.xml of jboss http port, that we'll see further steps
+
+8. run and check in intelliJ
+
+9. then build it by clean package maven goals
+eg: 
+	sample-spring-jboss-0.0.1-SNAPSHOT.war
+
+10. once it all done copy the war file from target to deployments folder of jboss>> standalone
+
+11. then we need check few things in standalone.xml
+	a. security-realm name of ApplicationRealm should be as follows:
+		<security-realm name="ApplicationRealm">
+    <authentication>
+        <local default-user="$local" allowed-users="*" skip-group-loading="true"/>
+        <properties path="application-users.properties" relative-to="jboss.server.config.dir"/>
+    </authentication>
+    <authorization map-groups-to-roles="false">
+        <properties path="application-roles.properties" relative-to="jboss.server.config.dir"/>
+    </authorization>
+</security-realm>
+
+	b. then check the port of http in standalone.xml:
+		the port of http same as you mentioned in your project's application.properties or your project server.port should be same as http port in standalone.xml
+        <socket-binding name="http" port="${jboss.http.port:8082}"/>
+
+	c. once port check done then we need to check application-user.properties should have one user with proper user name and password
+		eg:
+		razak=Razak@123
+
+	d. then check role of users in application-roles.properties
+		eg:
+		razak=admin,user,manager
+
+once all are done then start the jboss server
+
+and visit http://127.0.0.1:8082/sample-spring-jboss-0.0.1-SNAPSHOT/
+to see the mappings
